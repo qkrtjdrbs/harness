@@ -3,7 +3,7 @@
 import * as React from "react"
 
 import { calculateSaju } from "@/lib/saju"
-import { getTodayFiveElementRelation } from "@/lib/saju-daily-fortune"
+import { getTodayTenGod } from "@/lib/saju-daily-fortune"
 import { fetchSajuFortuneMessage } from "@/services/saju-fortune-service"
 
 type FortuneStatus = "idle" | "loading" | "success" | "error"
@@ -39,10 +39,10 @@ export function useSaju(
     let cancelled = false
     setFortuneStatus("loading")
 
-    const relation = getTodayFiveElementRelation(saju.dayMaster)
+    const tenGod = getTodayTenGod(saju.dayMaster)
     const today = new Date().toISOString().slice(0, 10)
 
-    fetchSajuFortuneMessage(relation, today)
+    fetchSajuFortuneMessage(tenGod, today)
       .then((message) => {
         if (cancelled) return
         setDailyFortune(message)

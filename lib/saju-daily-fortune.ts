@@ -1,12 +1,12 @@
 import { calculateFourPillars } from "manseryeok"
 
-import { getFiveElementRelation, type FiveElementRelation } from "@/lib/five-elements"
+import { getTenGod, type TenGod } from "@/lib/ten-gods"
 import type { SajuDayMaster } from "@/types/saju"
 
-export function getTodayFiveElementRelation(
+export function getTodayTenGod(
   dayMaster: SajuDayMaster,
   today: Date = new Date()
-): FiveElementRelation {
+): TenGod {
   const todayPillars = calculateFourPillars({
     year: today.getFullYear(),
     month: today.getMonth() + 1,
@@ -15,5 +15,8 @@ export function getTodayFiveElementRelation(
     minute: 0,
   })
 
-  return getFiveElementRelation(dayMaster.element, todayPillars.dayElement.stem)
+  return getTenGod(dayMaster, {
+    element: todayPillars.dayElement.stem,
+    yinYang: todayPillars.dayYinYang.stem,
+  })
 }

@@ -1,9 +1,9 @@
 export async function fetchSajuFortuneMessage(
-  relation: string,
+  tenGod: string,
   date: string
 ): Promise<string> {
   const response = await fetch(
-    `/api/saju-fortune?relation=${encodeURIComponent(relation)}&date=${encodeURIComponent(date)}`
+    `/api/saju-fortune?tenGod=${encodeURIComponent(tenGod)}&date=${encodeURIComponent(date)}`
   )
 
   if (!response.ok) {
