@@ -1,18 +1,20 @@
-export type ZodiacAnimal =
-  | "쥐"
-  | "소"
-  | "호랑이"
-  | "토끼"
-  | "용"
-  | "뱀"
-  | "말"
-  | "양"
-  | "원숭이"
-  | "닭"
-  | "개"
-  | "돼지"
+export type WesternZodiacSign =
+  | "aries"
+  | "taurus"
+  | "gemini"
+  | "cancer"
+  | "leo"
+  | "virgo"
+  | "libra"
+  | "scorpio"
+  | "sagittarius"
+  | "capricorn"
+  | "aquarius"
+  | "pisces"
 
 export type DailyFortune = {
-  animal: ZodiacAnimal
-  message: string
+  sign: WesternZodiacSign
+  signLabelKo: string
+  date: string
+  horoscope: string
 }
