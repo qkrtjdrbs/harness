@@ -11,8 +11,8 @@ const RELATION_DESCRIPTIONS: Record<Relation, string> = {
   overcomeBy: "오늘의 기운이 나(일간)를 극함 - 눌리기 쉬운 날",
 }
 
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434"
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? "llama3.1"
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
+const GROQ_MODEL = process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile"
 
 const fortuneCache = new Map<string, string>()
 
@@ -31,18 +31,25 @@ export async function GET(request: NextRequest) {
     )
   }
 
+  const apiKey = process.env.GROQ_API_KEY
+  if (!apiKey) {
+    return Response.json({ error: "Missing GROQ_API_KEY" }, { status: 500 })
+  }
+
   const cacheKey = `${date}:${relation}`
   const cached = fortuneCache.get(cacheKey)
   if (cached) {
     return Response.json({ message: cached })
   }
 
-  const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+  const response = await fetch(GROQ_API_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
     body: JSON.stringify({
-      model: OLLAMA_MODEL,
-      stream: false,
+      model: GROQ_MODEL,
       messages: [
         {
           role: "user",
@@ -55,14 +62,12 @@ export async function GET(request: NextRequest) {
   })
 
   if (!response.ok) {
-    return Response.json(
-      { error: "Failed to reach local Ollama server" },
-      { status: 502 }
-    )
+    return Response.json({ error: "Failed to reach Groq API" }, { status: 502 })
   }
 
   const data = await response.json()
-  const message: string = data?.message?.content?.trim() || "오늘의 운세를 불러오지 못했습니다."
+  const message: string =
+    data?.choices?.[0]?.message?.content?.trim() || "오늘의 운세를 불러오지 못했습니다."
 
   fortuneCache.set(cacheKey, message)
 
