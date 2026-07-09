@@ -118,13 +118,12 @@ export function StockSection() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>그때 샀더라면...</CardTitle>
+        <CardTitle>그 주식 그때 샀더라면...</CardTitle>
         <p className="text-xs text-muted-foreground">
           특정 날짜에 사서 지금까지 묵혀놨을 때 예상 손익을 계산해줘요.
         </p>
         <p className="text-xs text-muted-foreground">
-          S&amp;P500, 코스피100 편입 종목을 검색할 수 있어요. 목록은 스크롤하면
-          더 볼 수 있어요.
+          S&amp;P500, 코스피100 편입 종목을 검색할 수 있어요.
         </p>
         <div className="flex flex-col gap-2">
           <Combobox
