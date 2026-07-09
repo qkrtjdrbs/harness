@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { SparklesIcon } from "lucide-react"
+import { Loader2Icon, SparklesIcon } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -34,7 +34,7 @@ export function SajuSection() {
   const [birthMonth, setBirthMonth] = React.useState<number | null>(null)
   const [birthDay, setBirthDay] = React.useState<number | null>(null)
   const [birthHour, setBirthHour] = React.useState<number | null>(null)
-  const { pillars, dailyFortune } = useSaju(
+  const { pillars, dailyFortune, fortuneStatus } = useSaju(
     birthYear,
     birthMonth,
     birthDay,
@@ -135,7 +135,20 @@ export function SajuSection() {
               )}
             </div>
 
-            {dailyFortune && (
+            {fortuneStatus === "loading" && (
+              <div className="flex items-center gap-2 pt-2 text-sm text-muted-foreground">
+                <Loader2Icon className="size-4 animate-spin" />
+                <span>오늘의 운세를 불러오는 중...</span>
+              </div>
+            )}
+
+            {fortuneStatus === "error" && (
+              <p className="pt-2 text-sm text-destructive">
+                오늘의 운세를 가져오지 못했습니다.
+              </p>
+            )}
+
+            {fortuneStatus === "success" && dailyFortune && (
               <p className="text-sm text-muted-foreground pt-2">{dailyFortune}</p>
             )}
           </div>
