@@ -53,3 +53,8 @@ export function getWesternZodiacSign(
     ? { sign: match.sign, labelKo: match.labelKo }
     : { sign: CAPRICORN.sign, labelKo: CAPRICORN.labelKo }
 }
+
+export function getKoreanLabelForSign(sign: WesternZodiacSign): string {
+  const match = [...ZODIAC_RANGES, CAPRICORN].find((range) => range.sign === sign)
+  return match?.labelKo ?? sign
+}

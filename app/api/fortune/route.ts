@@ -1,5 +1,9 @@
 import { NextRequest } from "next/server"
 
+import type { WesternZodiacSign } from "@/types/fortune"
+import { getKoreanLabelForSign } from "@/lib/western-zodiac"
+import { translateToKorean } from "@/lib/translate"
+
 const FREE_HOROSCOPE_API_URL =
   "https://freehoroscopeapi.com/api/v1/get-horoscope/daily"
 
@@ -20,5 +24,14 @@ export async function GET(request: NextRequest) {
   }
 
   const data = await response.json()
-  return Response.json(data)
+  const translated = await translateToKorean(data.data.horoscope)
+  const signLabelKo = getKoreanLabelForSign(sign as WesternZodiacSign)
+  const horoscopeKo = translated.replace(
+    new RegExp(data.data.sign, "gi"),
+    signLabelKo
+  )
+
+  return Response.json({
+    data: { ...data.data, horoscope: horoscopeKo },
+  })
 }

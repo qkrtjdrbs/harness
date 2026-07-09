@@ -24,7 +24,7 @@ export function FortuneSection() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>오늘의 운세</CardTitle>
+        <CardTitle>오늘의 별자리 운세</CardTitle>
         <div className="flex gap-2">
           <Select
             value={birthMonth ? String(birthMonth) : ""}
