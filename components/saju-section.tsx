@@ -111,7 +111,8 @@ export function SajuSection() {
       <CardContent>
         {!pillars && (
           <p className="py-4 text-center text-muted-foreground">
-            생년월일시를 모두 선택하면 사주팔자를 볼 수 있어요.
+            생년월일시를 모두 선택하면 사주팔자 및 사주팔자 기반 오늘의 운세를
+            볼 수 있어요.
           </p>
         )}
 
