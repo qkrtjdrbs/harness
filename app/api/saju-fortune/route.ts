@@ -1,4 +1,3 @@
-import Anthropic from "@anthropic-ai/sdk"
 import { NextRequest } from "next/server"
 
 const RELATIONS = ["same", "generates", "generatedBy", "overcomes", "overcomeBy"] as const
@@ -12,8 +11,10 @@ const RELATION_DESCRIPTIONS: Record<Relation, string> = {
   overcomeBy: "오늘의 기운이 나(일간)를 극함 - 눌리기 쉬운 날",
 }
 
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434"
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? "llama3.1"
+
 const fortuneCache = new Map<string, string>()
-const client = new Anthropic()
 
 function isRelation(value: string | null): value is Relation {
   return value !== null && (RELATIONS as readonly string[]).includes(value)
@@ -36,24 +37,32 @@ export async function GET(request: NextRequest) {
     return Response.json({ message: cached })
   }
 
-  const response = await client.messages.create({
-    model: "claude-opus-4-8",
-    max_tokens: 200,
-    messages: [
-      {
-        role: "user",
-        content: `사주 오행 상생상극 관계를 기반으로 오늘의 운세 문구를 한국어로 1문장만 작성해줘. 오버스럽고 재미있는 톤으로, 이모지도 1~2개 써도 좋아. 다른 설명 없이 문장만 출력해줘.
+  const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: OLLAMA_MODEL,
+      stream: false,
+      messages: [
+        {
+          role: "user",
+          content: `사주 오행 상생상극 관계를 기반으로 오늘의 운세 문구를 한국어로 1문장만 작성해줘. 오버스럽고 재미있는 톤으로, 이모지도 1~2개 써도 좋아. 다른 설명 없이 문장만 출력해줘.
 
 오늘의 관계: ${RELATION_DESCRIPTIONS[relation]}`,
-      },
-    ],
+        },
+      ],
+    }),
   })
 
-  const textBlock = response.content.find((block) => block.type === "text")
-  const message =
-    textBlock && textBlock.type === "text"
-      ? textBlock.text.trim()
-      : "오늘의 운세를 불러오지 못했습니다."
+  if (!response.ok) {
+    return Response.json(
+      { error: "Failed to reach local Ollama server" },
+      { status: 502 }
+    )
+  }
+
+  const data = await response.json()
+  const message: string = data?.message?.content?.trim() || "오늘의 운세를 불러오지 못했습니다."
 
   fortuneCache.set(cacheKey, message)
 
