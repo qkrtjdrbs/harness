@@ -3,7 +3,7 @@
 import * as React from "react"
 
 import { calculateSaju } from "@/lib/saju"
-import { interpretSaju } from "@/lib/saju-interpretation"
+import { getTodaySajuFortune } from "@/lib/saju-daily-fortune"
 import type { SajuPillars } from "@/types/saju"
 
 export function useSaju(
@@ -14,7 +14,7 @@ export function useSaju(
 ) {
   const result = React.useMemo<{
     pillars: SajuPillars
-    interpretation: string
+    dailyFortune: string
   } | null>(() => {
     if (!year || !month || !day || hour === null) {
       return null
@@ -22,7 +22,10 @@ export function useSaju(
 
     try {
       const saju = calculateSaju({ year, month, day, hour })
-      return { pillars: saju.pillars, interpretation: interpretSaju(saju.dayMaster) }
+      return {
+        pillars: saju.pillars,
+        dailyFortune: getTodaySajuFortune(saju.dayMaster),
+      }
     } catch {
       return null
     }
@@ -30,6 +33,6 @@ export function useSaju(
 
   return {
     pillars: result?.pillars ?? null,
-    interpretation: result?.interpretation ?? null,
+    dailyFortune: result?.dailyFortune ?? null,
   }
 }
