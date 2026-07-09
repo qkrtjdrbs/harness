@@ -34,7 +34,7 @@ export function SajuSection() {
   const [birthMonth, setBirthMonth] = React.useState<number | null>(null)
   const [birthDay, setBirthDay] = React.useState<number | null>(null)
   const [birthHour, setBirthHour] = React.useState<number | null>(null)
-  const { pillars } = useSaju(
+  const { pillars, dailyFortune } = useSaju(
     birthYear,
     birthMonth,
     birthDay,
@@ -133,6 +133,10 @@ export function SajuSection() {
                 )
               )}
             </div>
+
+            {dailyFortune && (
+              <p className="text-sm text-muted-foreground pt-2">{dailyFortune}</p>
+            )}
           </div>
         )}
       </CardContent>
