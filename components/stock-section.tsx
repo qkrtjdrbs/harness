@@ -115,6 +115,25 @@ export function StockSection() {
     }
   }, [investment, prices, currentRate])
 
+  const currentValueByCurrency = React.useMemo(() => {
+    if (!investment || !prices || !currentRate) return null
+
+    return {
+      usd: convertCurrency(
+        investment.currentValue,
+        prices.currency as CurrencyCode,
+        "USD",
+        currentRate.usdToKrw
+      ),
+      krw: convertCurrency(
+        investment.currentValue,
+        prices.currency as CurrencyCode,
+        "KRW",
+        currentRate.usdToKrw
+      ),
+    }
+  }, [investment, prices, currentRate])
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
@@ -263,6 +282,22 @@ export function StockSection() {
                 </div>
                 <p className="text-xs text-muted-foreground">
                   손익 환산은 현재 환율({currentRate?.date}) 기준입니다.
+                </p>
+              </>
+            )}
+
+            {currentValueByCurrency && (
+              <>
+                <div className="flex justify-between border-t pt-2 font-medium">
+                  <span>총 평가액 (달러)</span>
+                  <span>{formatCurrencyAmount(currentValueByCurrency.usd, "USD")}</span>
+                </div>
+                <div className="flex justify-between font-medium">
+                  <span>총 평가액 (원화)</span>
+                  <span>{formatCurrencyAmount(currentValueByCurrency.krw, "KRW")}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  총 평가액 환산은 현재 환율({currentRate?.date}) 기준입니다.
                 </p>
               </>
             )}
