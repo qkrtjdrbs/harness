@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useFortune } from "@/hooks/use-fortune"
+import { ZODIAC_GRADIENTS, ZODIAC_SYMBOLS } from "@/lib/zodiac-visuals"
 
 const MONTHS = Array.from({ length: 12 }, (_, index) => index + 1)
 const DAYS = Array.from({ length: 31 }, (_, index) => index + 1)
@@ -80,8 +81,13 @@ export function FortuneSection() {
         )}
 
         {status === "success" && fortune && (
-          <div className="space-y-2">
-            <p className="flex items-center gap-1 text-sm text-muted-foreground">
+          <div className="space-y-3">
+            <div
+              className={`mx-auto flex size-20 items-center justify-center rounded-full bg-gradient-to-br text-4xl text-white shadow-md ${ZODIAC_GRADIENTS[fortune.sign]}`}
+            >
+              {ZODIAC_SYMBOLS[fortune.sign]}
+            </div>
+            <p className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
               <SparklesIcon className="size-4" />
               {fortune.signLabelKo} · {fortune.date}
             </p>
