@@ -34,7 +34,12 @@ export function SajuSection() {
   const [birthMonth, setBirthMonth] = React.useState<number | null>(null)
   const [birthDay, setBirthDay] = React.useState<number | null>(null)
   const [birthHour, setBirthHour] = React.useState<number | null>(null)
-  const { pillars } = useSaju(birthYear, birthMonth, birthDay, birthHour)
+  const { pillars, interpretation } = useSaju(
+    birthYear,
+    birthMonth,
+    birthDay,
+    birthHour
+  )
 
   return (
     <Card className="w-full max-w-md">
@@ -128,6 +133,13 @@ export function SajuSection() {
                 )
               )}
             </div>
+
+            {interpretation && (
+              <div className="space-y-1 pt-2">
+                <p className="text-sm font-medium">사주 해석</p>
+                <p className="text-sm text-muted-foreground">{interpretation}</p>
+              </div>
+            )}
           </div>
         )}
       </CardContent>
