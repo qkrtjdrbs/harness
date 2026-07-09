@@ -1,8 +1,8 @@
 import { calculateFourPillars } from "manseryeok"
 
-import type { SajuInput, SajuResult } from "@/types/saju"
+import type { SajuInput, SajuPillars } from "@/types/saju"
 
-export function calculateSaju(input: SajuInput): SajuResult {
+export function calculateSaju(input: SajuInput): SajuPillars {
   const result = calculateFourPillars({
     year: input.year,
     month: input.month,
@@ -11,11 +11,5 @@ export function calculateSaju(input: SajuInput): SajuResult {
     minute: 0,
   })
 
-  return {
-    pillars: result.toObject(),
-    dayMaster: {
-      element: result.dayElement.stem,
-      yinYang: result.dayYinYang.stem,
-    },
-  }
+  return result.toObject()
 }

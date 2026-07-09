@@ -34,7 +34,7 @@ export function SajuSection() {
   const [birthMonth, setBirthMonth] = React.useState<number | null>(null)
   const [birthDay, setBirthDay] = React.useState<number | null>(null)
   const [birthHour, setBirthHour] = React.useState<number | null>(null)
-  const { pillars, dailyFortune } = useSaju(
+  const { pillars } = useSaju(
     birthYear,
     birthMonth,
     birthDay,
@@ -44,7 +44,7 @@ export function SajuSection() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>내 사주팔자 보기</CardTitle>
+        <CardTitle>오늘의 운세</CardTitle>
         <div className="grid grid-cols-2 gap-2">
           <Select
             value={birthYear ? String(birthYear) : ""}
@@ -133,13 +133,6 @@ export function SajuSection() {
                 )
               )}
             </div>
-
-            {dailyFortune && (
-              <div className="space-y-1 pt-2">
-                <p className="text-sm font-medium">오늘의 운세</p>
-                <p className="text-sm text-muted-foreground">{dailyFortune}</p>
-              </div>
-            )}
           </div>
         )}
       </CardContent>

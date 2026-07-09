@@ -3,25 +3,19 @@ import { describe, expect, it } from "vitest"
 import { calculateSaju } from "@/lib/saju"
 
 describe("calculateSaju", () => {
-  it("maps a known birth date to the four pillars and day master", () => {
-    const result = calculateSaju({
+  it("maps a known birth date to the four pillars", () => {
+    const pillars = calculateSaju({
       year: 1992,
       month: 10,
       day: 24,
       hour: 5,
     })
 
-    expect(result).toEqual({
-      pillars: {
-        year: "임신",
-        month: "경술",
-        day: "계유",
-        hour: "을묘",
-      },
-      dayMaster: {
-        element: "수",
-        yinYang: "음",
-      },
+    expect(pillars).toEqual({
+      year: "임신",
+      month: "경술",
+      day: "계유",
+      hour: "을묘",
     })
   })
 
