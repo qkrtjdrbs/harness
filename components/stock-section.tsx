@@ -31,6 +31,8 @@ import type { CurrencyCode } from "@/types/stock"
 const STOCK_SYMBOLS = STOCKS.map((stock) => stock.symbol)
 const STOCK_BY_SYMBOL = new Map(STOCKS.map((stock) => [stock.symbol, stock]))
 const CURRENCIES: CurrencyCode[] = ["KRW", "USD"]
+const PAGE_SIZE = 20
+const SCROLL_LOAD_THRESHOLD_PX = 24
 
 function stockLabel(symbol: string) {
   const stock = STOCK_BY_SYMBOL.get(symbol)
@@ -48,12 +50,25 @@ export function StockSection() {
   const [date, setDate] = React.useState("")
   const [amount, setAmount] = React.useState("")
   const [inputCurrency, setInputCurrency] = React.useState<CurrencyCode>("KRW")
+  const [visibleLimit, setVisibleLimit] = React.useState(PAGE_SIZE)
 
   const amountNumber = amount ? Number(amount) : null
   const validAmount = amountNumber && amountNumber > 0 ? amountNumber : null
 
   const { prices, status } = useStockInvestment(symbol, date || null, validAmount)
   const { rate, status: rateStatus } = useExchangeRate(date || null)
+  const { rate: currentRate } = useExchangeRate(today)
+
+  function handleStockListScroll(event: React.UIEvent<HTMLDivElement>) {
+    const target = event.currentTarget
+    const reachedBottom =
+      target.scrollTop + target.clientHeight >=
+      target.scrollHeight - SCROLL_LOAD_THRESHOLD_PX
+
+    if (reachedBottom) {
+      setVisibleLimit((previous) => previous + PAGE_SIZE)
+    }
+  }
 
   const investment = React.useMemo(() => {
     if (!prices || !validAmount || !rate) return null
@@ -81,21 +96,49 @@ export function StockSection() {
       ? convertCurrency(validAmount, inputCurrency, "KRW", rate.usdToKrw)
       : null
 
+  const profitLossByCurrency = React.useMemo(() => {
+    if (!investment || !prices || !currentRate) return null
+
+    return {
+      usd: convertCurrency(
+        investment.profitLoss,
+        prices.currency as CurrencyCode,
+        "USD",
+        currentRate.usdToKrw
+      ),
+      krw: convertCurrency(
+        investment.profitLoss,
+        prices.currency as CurrencyCode,
+        "KRW",
+        currentRate.usdToKrw
+      ),
+    }
+  }, [investment, prices, currentRate])
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
         <CardTitle>모의 주식 투자</CardTitle>
+        <p className="text-xs text-muted-foreground">
+          S&amp;P500, 코스피100 편입 종목을 검색할 수 있어요. 목록은 스크롤하면
+          더 볼 수 있어요.
+        </p>
         <div className="flex flex-col gap-2">
           <Combobox
             items={STOCK_SYMBOLS}
             value={symbol ?? ""}
             onValueChange={(value) => setSymbol(value || null)}
+            onInputValueChange={() => setVisibleLimit(PAGE_SIZE)}
+            onOpenChange={(open) => {
+              if (open) setVisibleLimit(PAGE_SIZE)
+            }}
             itemToStringLabel={stockLabel}
+            limit={visibleLimit}
           >
             <ComboboxInput placeholder="종목 검색..." />
             <ComboboxContent>
               <ComboboxEmpty>검색 결과가 없습니다</ComboboxEmpty>
-              <ComboboxList>
+              <ComboboxList onScroll={handleStockListScroll}>
                 {(value) => (
                   <ComboboxItem key={value} value={value}>
                     {stockLabel(value)}
@@ -184,19 +227,43 @@ export function StockSection() {
               <span className="text-muted-foreground">현재 주가</span>
               <span>{formatCurrencyAmount(prices.currentPrice, prices.currency)}</span>
             </div>
-            <div className="flex justify-between border-t pt-2 font-medium">
-              <span>손익</span>
-              <span
-                className={
-                  investment.profitLoss >= 0 ? "text-red-600" : "text-blue-600"
-                }
-              >
-                {investment.profitLoss >= 0 ? "+" : ""}
-                {formatCurrencyAmount(investment.profitLoss, prices.currency)} (
-                {investment.profitLossPercent >= 0 ? "+" : ""}
-                {investment.profitLossPercent.toFixed(2)}%)
-              </span>
-            </div>
+            {profitLossByCurrency && (
+              <>
+                <div className="flex justify-between border-t pt-2 font-medium">
+                  <span>손익 (달러)</span>
+                  <span
+                    className={
+                      investment.profitLoss >= 0
+                        ? "text-red-600"
+                        : "text-blue-600"
+                    }
+                  >
+                    {investment.profitLoss >= 0 ? "+" : ""}
+                    {formatCurrencyAmount(profitLossByCurrency.usd, "USD")} (
+                    {investment.profitLossPercent >= 0 ? "+" : ""}
+                    {investment.profitLossPercent.toFixed(2)}%)
+                  </span>
+                </div>
+                <div className="flex justify-between font-medium">
+                  <span>손익 (원화)</span>
+                  <span
+                    className={
+                      investment.profitLoss >= 0
+                        ? "text-red-600"
+                        : "text-blue-600"
+                    }
+                  >
+                    {investment.profitLoss >= 0 ? "+" : ""}
+                    {formatCurrencyAmount(profitLossByCurrency.krw, "KRW")} (
+                    {investment.profitLossPercent >= 0 ? "+" : ""}
+                    {investment.profitLossPercent.toFixed(2)}%)
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  손익 환산은 현재 환율({currentRate?.date}) 기준입니다.
+                </p>
+              </>
+            )}
           </div>
         )}
       </CardContent>
