@@ -13,12 +13,24 @@ import {
   ComboboxList,
 } from "@/components/ui/combobox"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { STOCKS } from "@/config/stocks"
+import { calculateInvestmentReturn } from "@/lib/investment"
+import { convertCurrency } from "@/lib/currency-conversion"
 import { formatCurrencyAmount } from "@/lib/format-currency"
+import { useExchangeRate } from "@/hooks/use-exchange-rate"
 import { useStockInvestment } from "@/hooks/use-stock-investment"
+import type { CurrencyCode } from "@/types/stock"
 
 const STOCK_SYMBOLS = STOCKS.map((stock) => stock.symbol)
 const STOCK_BY_SYMBOL = new Map(STOCKS.map((stock) => [stock.symbol, stock]))
+const CURRENCIES: CurrencyCode[] = ["KRW", "USD"]
 
 function stockLabel(symbol: string) {
   const stock = STOCK_BY_SYMBOL.get(symbol)
@@ -35,13 +47,39 @@ export function StockSection() {
   const [symbol, setSymbol] = React.useState<string | null>(null)
   const [date, setDate] = React.useState("")
   const [amount, setAmount] = React.useState("")
+  const [inputCurrency, setInputCurrency] = React.useState<CurrencyCode>("KRW")
 
   const amountNumber = amount ? Number(amount) : null
-  const { prices, investment, status } = useStockInvestment(
-    symbol,
-    date || null,
-    amountNumber && amountNumber > 0 ? amountNumber : null
-  )
+  const validAmount = amountNumber && amountNumber > 0 ? amountNumber : null
+
+  const { prices, status } = useStockInvestment(symbol, date || null, validAmount)
+  const { rate, status: rateStatus } = useExchangeRate(date || null)
+
+  const investment = React.useMemo(() => {
+    if (!prices || !validAmount || !rate) return null
+
+    const convertedAmount = convertCurrency(
+      validAmount,
+      inputCurrency,
+      prices.currency as CurrencyCode,
+      rate.usdToKrw
+    )
+
+    return calculateInvestmentReturn(
+      convertedAmount,
+      prices.historicalPrice,
+      prices.currentPrice
+    )
+  }, [prices, validAmount, rate, inputCurrency])
+
+  const usdEquivalent =
+    validAmount && rate
+      ? convertCurrency(validAmount, inputCurrency, "USD", rate.usdToKrw)
+      : null
+  const krwEquivalent =
+    validAmount && rate
+      ? convertCurrency(validAmount, inputCurrency, "KRW", rate.usdToKrw)
+      : null
 
   return (
     <Card className="w-full max-w-md">
@@ -72,13 +110,45 @@ export function StockSection() {
             value={date}
             onChange={(event) => setDate(event.target.value)}
           />
-          <Input
-            type="number"
-            min={0}
-            placeholder="투자 금액"
-            value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-          />
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              min={0}
+              placeholder="투자 금액"
+              value={amount}
+              onChange={(event) => setAmount(event.target.value)}
+              className="flex-1"
+            />
+            <Select
+              value={inputCurrency}
+              onValueChange={(value) => setInputCurrency(value as CurrencyCode)}
+            >
+              <SelectTrigger className="w-24">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CURRENCIES.map((currency) => (
+                  <SelectItem key={currency} value={currency}>
+                    {currency}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {validAmount && rateStatus === "loading" && (
+            <p className="text-xs text-muted-foreground">
+              환율 정보를 불러오는 중...
+            </p>
+          )}
+
+          {validAmount && rate && usdEquivalent !== null && krwEquivalent !== null && (
+            <div className="space-y-0.5 rounded-md bg-muted/50 p-2 text-xs text-muted-foreground">
+              <p>달러 환산: {formatCurrencyAmount(usdEquivalent, "USD")}</p>
+              <p>원화 환산: {formatCurrencyAmount(krwEquivalent, "KRW")}</p>
+              <p>환율 계산 기준: 선택한 날짜({rate.date}) 기준 환율입니다.</p>
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent>

@@ -17,3 +17,10 @@ export type InvestmentResult = {
   profitLoss: number
   profitLossPercent: number
 }
+
+export type CurrencyCode = "USD" | "KRW"
+
+export type ExchangeRate = {
+  date: string
+  usdToKrw: number
+}

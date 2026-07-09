@@ -2,11 +2,10 @@
 
 import * as React from "react"
 
-import { calculateInvestmentReturn } from "@/lib/investment"
 import { fetchStockPrices } from "@/services/stock-service"
-import type { InvestmentResult, StockPriceResult } from "@/types/stock"
+import type { StockPriceResult } from "@/types/stock"
 
-type InvestmentStatus = "idle" | "loading" | "success" | "error"
+type StockPriceStatus = "idle" | "loading" | "success" | "error"
 
 export function useStockInvestment(
   symbol: string | null,
@@ -14,7 +13,7 @@ export function useStockInvestment(
   amount: number | null
 ) {
   const [prices, setPrices] = React.useState<StockPriceResult | null>(null)
-  const [status, setStatus] = React.useState<InvestmentStatus>("idle")
+  const [status, setStatus] = React.useState<StockPriceStatus>("idle")
 
   React.useEffect(() => {
     if (!symbol || !date || !amount) {
@@ -42,10 +41,5 @@ export function useStockInvestment(
     }
   }, [symbol, date, amount])
 
-  const investment = React.useMemo<InvestmentResult | null>(() => {
-    if (!prices || !amount) return null
-    return calculateInvestmentReturn(amount, prices.historicalPrice, prices.currentPrice)
-  }, [prices, amount])
-
-  return { prices, investment, status }
+  return { prices, status }
 }
