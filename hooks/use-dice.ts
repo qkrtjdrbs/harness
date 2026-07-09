@@ -2,23 +2,22 @@
 
 import * as React from "react"
 
-import { getDiceCheerMessage } from "@/lib/dice-messages"
 import { rollDice } from "@/lib/dice"
-import type { DiceValue } from "@/types/dice"
+import { getNextDiceRotation } from "@/lib/dice-rotation"
+import { getDiceCheerMessage } from "@/lib/dice-messages"
+import type { DiceRotation, DiceValue } from "@/types/dice"
 
-const ROLL_ANIMATION_MS = 800
-const ROLL_TICK_MS = 80
+const ROLL_DURATION_MS = 900
+const EXTRA_SPINS = 2
 
 export function useDice() {
   const [isRolling, setIsRolling] = React.useState(false)
-  const [displayValue, setDisplayValue] = React.useState<DiceValue>(1)
+  const [rotation, setRotation] = React.useState<DiceRotation>({ x: 0, y: 0 })
   const [value, setValue] = React.useState<DiceValue | null>(null)
-  const intervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null)
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
   React.useEffect(() => {
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
     }
   }, [])
@@ -26,25 +25,20 @@ export function useDice() {
   const roll = React.useCallback(() => {
     if (isRolling) return
 
+    const result = rollDice()
     setIsRolling(true)
     setValue(null)
-
-    intervalRef.current = setInterval(() => {
-      setDisplayValue(rollDice())
-    }, ROLL_TICK_MS)
+    setRotation((current) => getNextDiceRotation(current, result, EXTRA_SPINS))
 
     timeoutRef.current = setTimeout(() => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-      const result = rollDice()
-      setDisplayValue(result)
       setValue(result)
       setIsRolling(false)
-    }, ROLL_ANIMATION_MS)
+    }, ROLL_DURATION_MS)
   }, [isRolling])
 
   return {
     isRolling,
-    displayValue,
+    rotation,
     value,
     message: value ? getDiceCheerMessage(value) : null,
     roll,
