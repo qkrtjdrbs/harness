@@ -1,3 +1,4 @@
+import { DiceSection } from "@/components/dice-section";
 import { FortuneSection } from "@/components/fortune-section";
 import { SajuSection } from "@/components/saju-section";
 import { WeatherSection } from "@/components/weather-section";
@@ -8,6 +9,7 @@ export default function Page() {
       <WeatherSection />
       <FortuneSection />
       <SajuSection />
+      <DiceSection />
     </div>
   );
 }
