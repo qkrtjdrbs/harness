@@ -1,5 +1,7 @@
 "use client"
 
+import { Loader2Icon } from "lucide-react"
+
 import { DiceCube } from "@/components/dice-cube"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useDice } from "@/hooks/use-dice"
@@ -15,7 +17,7 @@ const MESSAGE_WEIGHT_BY_VALUE: Record<DiceValue, string> = {
 }
 
 export function DiceSection() {
-  const { isRolling, rotation, value, message, roll } = useDice()
+  const { isRolling, rotation, value, message, messageStatus, roll } = useDice()
 
   return (
     <Card className="w-full max-w-md">
@@ -39,7 +41,20 @@ export function DiceSection() {
           </p>
         )}
 
-        {value && message && (
+        {value && messageStatus === "loading" && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2Icon className="size-4 animate-spin" />
+            <span>오늘의 응원 메시지를 불러오는 중...</span>
+          </div>
+        )}
+
+        {value && messageStatus === "error" && (
+          <p className="text-center text-sm text-destructive">
+            응원 메시지를 가져오지 못했습니다.
+          </p>
+        )}
+
+        {value && messageStatus === "success" && message && (
           <p className={`text-center ${MESSAGE_WEIGHT_BY_VALUE[value]}`}>
             {message}
           </p>
