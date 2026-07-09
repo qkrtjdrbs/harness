@@ -29,11 +29,62 @@ const TEN_GOD_DESCRIPTIONS: Record<TenGod, string> = {
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 const GROQ_MODEL = process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile"
+const MAX_ATTEMPTS = 3
+const FALLBACK_MESSAGE = "오늘은 차분하게 흘러가는 하루예요."
 
 const fortuneCache = new Map<string, string>()
 
 function isTenGod(value: string | null): value is TenGod {
   return value !== null && (TEN_GODS as readonly string[]).includes(value)
+}
+
+function containsLatinLetters(text: string): boolean {
+  return /[A-Za-z]/.test(text)
+}
+
+function stripLatinLetters(text: string): string {
+  return text
+    .replace(/[A-Za-z]+/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim()
+}
+
+function buildPrompt(tenGod: TenGod, isRetry: boolean): string {
+  const base = `사주 십신(十神) 이론을 기반으로 오늘의 운세 문구를 한국어로 1문장만 작성해줘. 오버스럽고 재미있는 톤으로, 이모지도 1~2개 써도 좋아. 다른 설명 없이 문장만 출력해줘.
+
+지켜야 할 규칙: 알파벳(영어)은 단 한 글자도 쓰지 마. 한자, 일본어도 쓰지 마. 오직 한글, 숫자, 문장부호, 이모지만 사용해.
+
+오늘의 십신: ${tenGod} - ${TEN_GOD_DESCRIPTIONS[tenGod]}`
+
+  if (!isRetry) return base
+
+  return `${base}
+
+주의: 방금 전 답변에 영어 알파벳이 섞여 있었어. 이번엔 알파벳을 절대 쓰지 말고 순수 한글로만 다시 작성해줘.`
+}
+
+async function requestFortuneMessage(
+  apiKey: string,
+  tenGod: TenGod,
+  isRetry: boolean
+): Promise<string | null> {
+  const response = await fetch(GROQ_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages: [{ role: "user", content: buildPrompt(tenGod, isRetry) }],
+    }),
+  })
+
+  if (!response.ok) return null
+
+  const data = await response.json()
+  const message: string | undefined = data?.choices?.[0]?.message?.content?.trim()
+  return message || null
 }
 
 export async function GET(request: NextRequest) {
@@ -58,32 +109,28 @@ export async function GET(request: NextRequest) {
     return Response.json({ message: cached })
   }
 
-  const response = await fetch(GROQ_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: GROQ_MODEL,
-      messages: [
-        {
-          role: "user",
-          content: `사주 십신(十神) 이론을 기반으로 오늘의 운세 문구를 한국어로 1문장만 작성해줘. 순수 한국어와 한글 이모지만 사용하고, 한자나 일본어 등 다른 언어는 섞지 마. 오버스럽고 재미있는 톤으로, 이모지도 1~2개 써도 좋아. 다른 설명 없이 문장만 출력해줘.
+  let message: string | null = null
+  let lastCandidate: string | null = null
 
-오늘의 십신: ${tenGod} - ${TEN_GOD_DESCRIPTIONS[tenGod]}`,
-        },
-      ],
-    }),
-  })
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const candidate = await requestFortuneMessage(apiKey, tenGod, attempt > 0)
 
-  if (!response.ok) {
-    return Response.json({ error: "Failed to reach Groq API" }, { status: 502 })
+    if (candidate === null) {
+      return Response.json({ error: "Failed to reach Groq API" }, { status: 502 })
+    }
+
+    lastCandidate = candidate
+
+    if (!containsLatinLetters(candidate)) {
+      message = candidate
+      break
+    }
   }
 
-  const data = await response.json()
-  const message: string =
-    data?.choices?.[0]?.message?.content?.trim() || "오늘의 운세를 불러오지 못했습니다."
+  if (message === null) {
+    const stripped = lastCandidate ? stripLatinLetters(lastCandidate) : ""
+    message = stripped.length > 0 ? stripped : FALLBACK_MESSAGE
+  }
 
   fortuneCache.set(cacheKey, message)
 
